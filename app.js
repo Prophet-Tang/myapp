@@ -3,42 +3,48 @@
 // 1 = 周一 ... 7 = 周日（0 号位留空，方便下标直接取）
 const DAY_NAMES = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
-// 默认周计划模板：每个动作有 id（唯一）、name、sets（组）、reps（次）
+// 固定训练计划（不可修改）：每个动作有 id（唯一）、name、detail（组数×次数说明）
+// 训练周期从周三开始排，到下周二「完全休息」
 const DEFAULT_PLAN = {
-  1: [
-    { id: 'chest-bench',    name: '杠铃卧推',     sets: 4, reps: 8 },
-    { id: 'chest-incline',  name: '上斜哑铃卧推', sets: 4, reps: 10 },
-    { id: 'chest-fly',      name: '蝴蝶机夹胸',   sets: 3, reps: 12 },
-    { id: 'tri-pushdown',   name: '绳索下压',     sets: 3, reps: 12 },
+  1: [ // 周一：全身补强（可选）
+    { id: 'fullbody-mix', name: '俯卧撑 / 引体 / 分腿蹲（任选 2 项）', detail: '中低强度' },
   ],
-  2: [
-    { id: 'back-pullup',    name: '引体向上',     sets: 4, reps: 8 },
-    { id: 'back-row',       name: '杠铃划船',     sets: 4, reps: 8 },
-    { id: 'back-pulldown',  name: '高位下拉',     sets: 3, reps: 10 },
-    { id: 'bi-curl',        name: '杠铃弯举',     sets: 3, reps: 10 },
+  2: [], // 周二：完全休息
+  3: [ // 周三：推（肩+胸）
+    { id: 'pike-pushup', name: '派克俯卧撑', detail: '4×8-12' },
+    { id: 'pushup', name: '俯卧撑', detail: '3×尽量多' },
+    { id: 'lateral-raise', name: '侧平举', detail: '4×12-15' },
+    { id: 'reverse-fly', name: '俯身飞鸟', detail: '3×12-15' },
   ],
-  3: [
-    { id: 'leg-squat',      name: '深蹲',         sets: 4, reps: 6 },
-    { id: 'leg-deadlift',   name: '硬拉',         sets: 3, reps: 5 },
-    { id: 'leg-lunge',      name: '箭步蹲',       sets: 3, reps: 10 },
-    { id: 'leg-calf',       name: '提踵',         sets: 4, reps: 15 },
+  4: [ // 周四：拉（背+腹）
+    { id: 'pullup', name: '引体', detail: '4×尽量多' },
+    { id: 'chinup', name: '反手/窄距引体（或离心引体）', detail: '3×尽量多' },
+    { id: 'hanging-leg-raise', name: '悬垂举腿', detail: '3×8-12' },
+    { id: 'ab-wheel', name: '健腹轮', detail: '3×8-12' },
   ],
-  4: [
-    { id: 'shoulder-ohp',   name: '杠铃推举',     sets: 4, reps: 8 },
-    { id: 'shoulder-lat',   name: '哑铃侧平举',   sets: 4, reps: 12 },
-    { id: 'shoulder-rear',  name: '反向飞鸟',     sets: 3, reps: 15 },
+  5: [ // 周五：腿（+腹）
+    { id: 'bw-squat', name: '徒手深蹲（热身）', detail: '2×10' },
+    { id: 'bulgarian-split-squat', name: '保加利亚分腿蹲', detail: '3×8-12/腿' },
+    { id: 'single-leg-hip-bridge', name: '单腿臀桥', detail: '3×12/腿' },
+    { id: 'calf-raise', name: '提踵', detail: '3×20' },
+    { id: 'crunch', name: '卷腹', detail: '3×15' },
   ],
-  5: [
-    { id: 'arm-cgbp',       name: '窄距卧推',     sets: 3, reps: 8 },
-    { id: 'arm-curl',       name: '哑铃弯举',     sets: 4, reps: 10 },
-    { id: 'arm-skull',      name: '仰卧臂屈伸',   sets: 3, reps: 10 },
+  6: [ // 周六：肩变式进阶（+腹）
+    { id: 'elevated-pike-pushup', name: '高位派克俯卧撑（脚垫更高）', detail: '4×6-10' },
+    { id: 'lateral-raise-slow', name: '侧平举（慢速离心）', detail: '4×15' },
+    { id: 'wall-handstand', name: '靠墙倒立', detail: '3×30-60s' },
+    { id: 'ab-wheel', name: '健腹轮', detail: '3×10-12' },
+    { id: 'hanging-leg-raise', name: '悬垂举腿', detail: '3×10-12' },
   ],
-  6: [], // 周六休息
-  7: [], // 周日休息
+  7: [ // 周日：主动恢复
+    { id: 'stretch-posture', name: '拉伸 + 体态（靠墙站立/肩胛后缩）', detail: '' },
+    { id: 'face-pull', name: '面拉（有弹力带就做）', detail: '2×15' },
+    { id: 'plank', name: '平板', detail: '2×30s' },
+  ],
 };
 
-const PLAN_KEY = 'fitness-plan-v1';
-const LOGS_KEY = 'fitness-logs-v1';
+const PLAN_KEY = 'fitness-plan-v2';
+const LOGS_KEY = 'fitness-logs-v2';
 
 // ============ 工具函数 ============
 
@@ -75,10 +81,6 @@ function loadPlan() {
     if (raw) return JSON.parse(raw);
   } catch (e) {}
   return JSON.parse(JSON.stringify(DEFAULT_PLAN));
-}
-
-function savePlan(plan) {
-  localStorage.setItem(PLAN_KEY, JSON.stringify(plan));
 }
 
 // logs 结构：{ 'YYYY-MM-DD': { 动作id: true } }
@@ -127,7 +129,7 @@ function renderToday() {
         <button class="check" data-id="${ex.id}">${checked ? '✓' : ''}</button>
         <div class="info">
           <span class="name">${escapeHtml(ex.name)}</span>
-          <span class="detail">${ex.sets} 组 × ${ex.reps} 次</span>
+          ${ex.detail ? `<span class="detail">${escapeHtml(ex.detail)}</span>` : ''}
         </div>
       `;
       li.querySelector('.check').addEventListener('click', () => toggleExercise(ex.id));
@@ -175,87 +177,133 @@ function renderWeekOverview() {
   }
 }
 
-// ============ 计划编辑 ============
+// ============ 打卡日历 ============
 
-let editingDay = null;
+let calYear = null, calMonth = null; // 当前显示的年/月
 
-function renderPlanEditor() {
+// 某个日期对应星期几，1=周一 ... 7=周日
+function dayIndexOf(date) {
+  return ((date.getDay() + 6) % 7) + 1;
+}
+
+// 某天的状态：rest 休息 / missed 没练 / partial 部分 / full 练完
+function dayStatus(date) {
   const plan = loadPlan();
-  if (!editingDay) editingDay = todayDayIndex();
+  const logs = loadLogs();
+  const exercises = plan[dayIndexOf(date)] || [];
+  if (exercises.length === 0) return 'rest';
+  const dayLogs = logs[dateKeyOf(date)] || {};
+  const completed = exercises.filter((ex) => dayLogs[ex.id]).length;
+  if (completed === 0) return 'missed';
+  if (completed === exercises.length) return 'full';
+  return 'partial';
+}
 
-  const tabsEl = document.getElementById('day-tabs');
-  tabsEl.innerHTML = '';
-  for (let i = 1; i <= 7; i++) {
-    const btn = document.createElement('button');
-    btn.textContent = DAY_NAMES[i];
-    btn.className = 'day-tab' + (i === editingDay ? ' active' : '');
-    btn.addEventListener('click', () => { editingDay = i; renderPlanEditor(); });
-    tabsEl.appendChild(btn);
+function renderCalendar() {
+  if (calYear === null) {
+    const now = new Date();
+    calYear = now.getFullYear();
+    calMonth = now.getMonth();
+  }
+  document.getElementById('cal-title').textContent = `${calYear}年${calMonth + 1}月`;
+
+  const firstDay = new Date(calYear, calMonth, 1);
+  const startOffset = (firstDay.getDay() + 6) % 7; // 该月1号是周几（周一=0）
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  const now = new Date();
+  const todayKeyStr = dateKeyOf(now);
+  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  for (let i = 0; i < startOffset; i++) {
+    const blank = document.createElement('div');
+    blank.className = 'cal-cell blank';
+    grid.appendChild(blank);
   }
 
-  const listEl = document.getElementById('edit-list');
-  listEl.innerHTML = '';
-  const exercises = plan[editingDay] || [];
-  exercises.forEach((ex, idx) => listEl.appendChild(buildEditRow(ex, idx)));
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(calYear, calMonth, d);
+    const isToday = dateKeyOf(date) === todayKeyStr;
+    const isFuture = date > todayMidnight;
+
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell';
+    cell.textContent = d;
+    if (isToday) cell.classList.add('today');
+    if (isFuture) cell.classList.add('future');
+    else cell.classList.add(dayStatus(date));
+    cell.addEventListener('click', () => showDayDetail(date));
+    grid.appendChild(cell);
+  }
 }
 
-function buildEditRow(ex, idx) {
-  const li = document.createElement('li');
-  li.className = 'edit-row';
-  li.innerHTML = `
-    <input class="edit-name" value="${escapeHtml(ex.name)}" placeholder="动作名">
-    <div class="edit-nums">
-      <input class="edit-sets" type="number" min="1" inputmode="numeric" value="${ex.sets}">组
-      <input class="edit-reps" type="number" min="1" inputmode="numeric" value="${ex.reps}">次
-    </div>
-    <button class="del">删</button>
-  `;
-  li.querySelector('.edit-name').addEventListener('change', (e) => updateExercise(idx, 'name', e.target.value.trim()));
-  li.querySelector('.edit-sets').addEventListener('change', (e) => updateExercise(idx, 'sets', parseInt(e.target.value) || 1));
-  li.querySelector('.edit-reps').addEventListener('change', (e) => updateExercise(idx, 'reps', parseInt(e.target.value) || 1));
-  li.querySelector('.del').addEventListener('click', () => deleteExercise(idx));
-  return li;
-}
-
-function updateExercise(idx, field, value) {
+function showDayDetail(date) {
   const plan = loadPlan();
-  plan[editingDay][idx][field] = value;
-  savePlan(plan);
-  renderToday();      // 若编辑的是今天，同步刷新今日页
+  const logs = loadLogs();
+  const key = dateKeyOf(date);
+  const exercises = plan[dayIndexOf(date)] || [];
+  const dayLogs = logs[key] || {};
+
+  const el = document.getElementById('cal-detail');
+  const dateStr = `${date.getMonth() + 1}月${date.getDate()}日 ${DAY_NAMES[dayIndexOf(date)]}`;
+
+  if (exercises.length === 0) {
+    el.innerHTML = `<div class="cal-detail-head">${dateStr} · 休息日</div>`;
+    return;
+  }
+
+  const completed = exercises.filter((ex) => dayLogs[ex.id]).length;
+  let html = `<div class="cal-detail-head">${dateStr} · 完成 ${completed}/${exercises.length}</div>`;
+  html += '<ul class="list">';
+  exercises.forEach((ex) => {
+    const done = !!dayLogs[ex.id];
+    html += `<li class="exercise${done ? ' done' : ''}">
+      <span class="check">${done ? '✓' : ''}</span>
+      <div class="info">
+        <span class="name">${escapeHtml(ex.name)}</span>
+        ${ex.detail ? `<span class="detail">${escapeHtml(ex.detail)}</span>` : ''}
+      </div>
+    </li>`;
+  });
+  html += '</ul>';
+  el.innerHTML = html;
 }
 
-function addExercise() {
-  const plan = loadPlan();
-  if (!plan[editingDay]) plan[editingDay] = [];
-  plan[editingDay].push({ id: 'ex-' + Date.now(), name: '新动作', sets: 3, reps: 10 });
-  savePlan(plan);
-  renderPlanEditor();
+function changeMonth(delta) {
+  calMonth += delta;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
 }
 
-function deleteExercise(idx) {
-  const plan = loadPlan();
-  plan[editingDay].splice(idx, 1);
-  savePlan(plan);
-  renderPlanEditor();
-  renderToday();
+function goToToday() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+  renderCalendar();
 }
 
 // ============ 标签切换 ============
 
 function switchTab(name) {
   document.getElementById('view-today').classList.toggle('hidden', name !== 'today');
-  document.getElementById('view-plan').classList.toggle('hidden', name !== 'plan');
+  document.getElementById('view-calendar').classList.toggle('hidden', name !== 'calendar');
   document.getElementById('tab-today').classList.toggle('active', name === 'today');
-  document.getElementById('tab-plan').classList.toggle('active', name === 'plan');
-  if (name === 'plan') renderPlanEditor();
+  document.getElementById('tab-calendar').classList.toggle('active', name === 'calendar');
   if (name === 'today') renderToday();
+  if (name === 'calendar') renderCalendar();
 }
 
 // ============ 初始化 ============
 
 document.getElementById('tab-today').addEventListener('click', () => switchTab('today'));
-document.getElementById('tab-plan').addEventListener('click', () => switchTab('plan'));
-document.getElementById('add-exercise').addEventListener('click', addExercise);
+document.getElementById('tab-calendar').addEventListener('click', () => switchTab('calendar'));
+document.getElementById('cal-prev').addEventListener('click', () => changeMonth(-1));
+document.getElementById('cal-next').addEventListener('click', () => changeMonth(1));
+document.getElementById('cal-today').addEventListener('click', goToToday);
 
 renderToday();
 
