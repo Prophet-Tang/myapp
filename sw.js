@@ -1,6 +1,6 @@
 // Service Worker：缓存静态资源，让 PWA 能离线打开
 // 改代码后记得把 CACHE 版本号 +1，浏览器才会拉新文件
-const CACHE = 'fitness-v1';
+const CACHE = 'fitness-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -24,17 +24,17 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// 缓存优先：命中缓存直接返回，否则走网络并回填缓存
+// 网络优先：先联网拿最新文件，拿不到（离线）才用缓存。
+// 这样改完代码刷新就能看到新效果，不用每次改版本号。
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
-    caches.match(e.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(e.request).then((res) => {
+    fetch(e.request)
+      .then((res) => {
         const copy = res.clone();
         caches.open(CACHE).then((c) => c.put(e.request, copy));
         return res;
-      });
-    })
+      })
+      .catch(() => caches.match(e.request))
   );
 });
