@@ -1,0 +1,222 @@
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --card-2: #273449;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #34d399;
+  --accent-dim: #134e3a;
+  --danger: #f87171;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  /* 适配 iPhone 刘海屏安全区 */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ===== 顶部 ===== */
+header {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  padding: 16px 16px 0;
+  z-index: 10;
+}
+
+.header-top h1 { margin: 0 0 4px; font-size: 22px; }
+.header-top p { margin: 0; color: var(--muted); font-size: 13px; }
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--muted);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.tab.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+
+/* ===== 主体 ===== */
+main {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.hidden { display: none; }
+
+/* ===== 本周概览 ===== */
+.week-overview {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.week-overview .dot {
+  flex: 1;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.week-overview .dot.today { outline: 2px solid var(--accent); color: var(--text); }
+.week-overview .dot.partial { background: var(--accent-dim); color: var(--accent); }
+.week-overview .dot.full { background: var(--accent); color: var(--bg); font-weight: 700; }
+
+/* ===== 进度条 ===== */
+.progress { margin-bottom: 16px; }
+.progress-row {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.progress-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--card);
+  overflow: hidden;
+}
+#progress-bar {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width .25s ease;
+}
+
+/* ===== 列表 ===== */
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.exercise {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.exercise .check {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid var(--muted);
+  background: transparent;
+  color: var(--bg);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.exercise.done .check { background: var(--accent); border-color: var(--accent); }
+.exercise.done .name { text-decoration: line-through; color: var(--muted); }
+
+.exercise .info { display: flex; flex-direction: column; gap: 2px; }
+.exercise .name { font-size: 16px; }
+.exercise .detail { font-size: 13px; color: var(--muted); }
+
+.rest {
+  text-align: center;
+  padding: 48px 0;
+  color: var(--muted);
+  font-size: 18px;
+}
+
+/* ===== 计划编辑 ===== */
+.day-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+}
+
+.day-tab {
+  flex: 1;
+  min-width: 44px;
+  padding: 8px 0;
+  border: none;
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.day-tab.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+
+.edit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.edit-row input {
+  background: var(--card-2);
+  border: none;
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 15px;
+  padding: 8px;
+}
+
+.edit-name { flex: 1; min-width: 0; }
+
+.edit-nums { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 13px; }
+.edit-nums input { width: 44px; text-align: center; }
+
+.del {
+  border: none;
+  background: transparent;
+  color: var(--danger);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 6px;
+}
+
+.add {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px dashed var(--muted);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 15px;
+  cursor: pointer;
+}
+.add:active { background: var(--card); }
