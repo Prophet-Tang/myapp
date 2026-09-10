@@ -20,18 +20,19 @@
 <body>
   <header>
     <div class="header-top">
-      <h1> 健身计划</h1>
+      <h1>健身计划</h1>
       <p id="date-label"></p>
     </div>
-    <nav class="tabs">
-      <button id="tab-today" class="tab active">今日</button>
-      <button id="tab-calendar" class="tab">日历</button>
-    </nav>
   </header>
 
   <main>
-    <!-- 今日打卡 -->
-    <section id="view-today">
+    <!-- 开始页（初始显示） -->
+    <div id="start-screen" class="start-screen">
+      <button id="start-btn" class="start-btn">开始</button>
+    </div>
+
+    <!-- 今日打卡（点「开始」后显示） -->
+    <section id="view-today" class="hidden">
       <div id="week-overview" class="week-overview"></div>
 
       <div id="progress" class="progress">
@@ -43,28 +44,7 @@
       </div>
 
       <ul id="today-list" class="list"></ul>
-      <div id="rest-day" class="rest hidden">今天是休息日 </div>
-    </section>
-
-    <!-- 打卡日历 -->
-    <section id="view-calendar" class="hidden">
-      <div class="cal-nav">
-        <button id="cal-prev">‹</button>
-        <span id="cal-title"></span>
-        <button id="cal-next">›</button>
-        <button id="cal-today" class="cal-today-btn">今天</button>
-      </div>
-      <div class="cal-weekdays">
-        <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
-      </div>
-      <div id="cal-grid" class="cal-grid"></div>
-      <div class="cal-legend">
-        <span class="lg lg-full">练完</span>
-        <span class="lg lg-partial">部分</span>
-        <span class="lg lg-missed">没练</span>
-        <span class="lg lg-rest">休息</span>
-      </div>
-      <div id="cal-detail"></div>
+      <div id="rest-day" class="rest hidden">今天是休息日</div>
     </section>
   </main>
 

@@ -177,135 +177,17 @@ function renderWeekOverview() {
   }
 }
 
-// ============ 打卡日历 ============
-
-let calYear = null, calMonth = null; // 当前显示的年/月
-
-// 某个日期对应星期几，1=周一 ... 7=周日
-function dayIndexOf(date) {
-  return ((date.getDay() + 6) % 7) + 1;
-}
-
-// 某天的状态：rest 休息 / missed 没练 / partial 部分 / full 练完
-function dayStatus(date) {
-  const plan = loadPlan();
-  const logs = loadLogs();
-  const exercises = plan[dayIndexOf(date)] || [];
-  if (exercises.length === 0) return 'rest';
-  const dayLogs = logs[dateKeyOf(date)] || {};
-  const completed = exercises.filter((ex) => dayLogs[ex.id]).length;
-  if (completed === 0) return 'missed';
-  if (completed === exercises.length) return 'full';
-  return 'partial';
-}
-
-function renderCalendar() {
-  if (calYear === null) {
-    const now = new Date();
-    calYear = now.getFullYear();
-    calMonth = now.getMonth();
-  }
-  document.getElementById('cal-title').textContent = `${calYear}年${calMonth + 1}月`;
-
-  const firstDay = new Date(calYear, calMonth, 1);
-  const startOffset = (firstDay.getDay() + 6) % 7; // 该月1号是周几（周一=0）
-  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-
-  const grid = document.getElementById('cal-grid');
-  grid.innerHTML = '';
-
-  const now = new Date();
-  const todayKeyStr = dateKeyOf(now);
-  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-  for (let i = 0; i < startOffset; i++) {
-    const blank = document.createElement('div');
-    blank.className = 'cal-cell blank';
-    grid.appendChild(blank);
-  }
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const date = new Date(calYear, calMonth, d);
-    const isToday = dateKeyOf(date) === todayKeyStr;
-    const isFuture = date > todayMidnight;
-
-    const cell = document.createElement('div');
-    cell.className = 'cal-cell';
-    cell.textContent = d;
-    if (isToday) cell.classList.add('today');
-    if (isFuture) cell.classList.add('future');
-    else cell.classList.add(dayStatus(date));
-    cell.addEventListener('click', () => showDayDetail(date));
-    grid.appendChild(cell);
-  }
-}
-
-function showDayDetail(date) {
-  const plan = loadPlan();
-  const logs = loadLogs();
-  const key = dateKeyOf(date);
-  const exercises = plan[dayIndexOf(date)] || [];
-  const dayLogs = logs[key] || {};
-
-  const el = document.getElementById('cal-detail');
-  const dateStr = `${date.getMonth() + 1}月${date.getDate()}日 ${DAY_NAMES[dayIndexOf(date)]}`;
-
-  if (exercises.length === 0) {
-    el.innerHTML = `<div class="cal-detail-head">${dateStr} · 休息日</div>`;
-    return;
-  }
-
-  const completed = exercises.filter((ex) => dayLogs[ex.id]).length;
-  let html = `<div class="cal-detail-head">${dateStr} · 完成 ${completed}/${exercises.length}</div>`;
-  html += '<ul class="list">';
-  exercises.forEach((ex) => {
-    const done = !!dayLogs[ex.id];
-    html += `<li class="exercise${done ? ' done' : ''}">
-      <span class="check">${done ? '✓' : ''}</span>
-      <div class="info">
-        <span class="name">${escapeHtml(ex.name)}</span>
-        ${ex.detail ? `<span class="detail">${escapeHtml(ex.detail)}</span>` : ''}
-      </div>
-    </li>`;
-  });
-  html += '</ul>';
-  el.innerHTML = html;
-}
-
-function changeMonth(delta) {
-  calMonth += delta;
-  if (calMonth < 0) { calMonth = 11; calYear--; }
-  if (calMonth > 11) { calMonth = 0; calYear++; }
-  renderCalendar();
-}
-
-function goToToday() {
-  const now = new Date();
-  calYear = now.getFullYear();
-  calMonth = now.getMonth();
-  renderCalendar();
-}
-
-// ============ 标签切换 ============
-
-function switchTab(name) {
-  document.getElementById('view-today').classList.toggle('hidden', name !== 'today');
-  document.getElementById('view-calendar').classList.toggle('hidden', name !== 'calendar');
-  document.getElementById('tab-today').classList.toggle('active', name === 'today');
-  document.getElementById('tab-calendar').classList.toggle('active', name === 'calendar');
-  if (name === 'today') renderToday();
-  if (name === 'calendar') renderCalendar();
-}
-
 // ============ 初始化 ============
 
-document.getElementById('tab-today').addEventListener('click', () => switchTab('today'));
-document.getElementById('tab-calendar').addEventListener('click', () => switchTab('calendar'));
-document.getElementById('cal-prev').addEventListener('click', () => changeMonth(-1));
-document.getElementById('cal-next').addEventListener('click', () => changeMonth(1));
-document.getElementById('cal-today').addEventListener('click', goToToday);
+// 一开始就显示日期（开始页也能看到今天周几）
+document.getElementById('date-label').textContent = `${DAY_NAMES[todayDayIndex()]} · ${dateKeyOf(new Date())}`;
 
-renderToday();
+// 点「开始」→ 进入今日训练计划
+document.getElementById('start-btn').addEventListener('click', () => {
+  document.getElementById('start-screen').classList.add('hidden');
+  document.getElementById('view-today').classList.remove('hidden');
+  renderToday();
+});
 
 // 注册 Service Worker（仅 http/https 下生效，file:// 会被忽略）
 if ('serviceWorker' in navigator) {
