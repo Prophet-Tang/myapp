@@ -9,7 +9,13 @@
   --danger: #f87171;
 }
 
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
 
 html, body {
   margin: 0;
@@ -24,6 +30,7 @@ body {
   /* 适配 iPhone 刘海屏安全区 */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
+  touch-action: manipulation;
 }
 
 /* ===== 顶部 ===== */
@@ -45,7 +52,7 @@ main {
   padding: 16px;
 }
 
-.hidden { display: none; }
+.hidden { display: none !important; }
 
 /* ===== 开始按钮 ===== */
 .start-screen {
@@ -68,29 +75,6 @@ main {
   box-shadow: 0 8px 30px rgba(52, 211, 153, .35);
 }
 .start-btn:active { transform: scale(.96); }
-
-/* ===== 本周概览 ===== */
-.week-overview {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.week-overview .dot {
-  flex: 1;
-  aspect-ratio: 1;
-  border-radius: 8px;
-  background: var(--card);
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-}
-
-.week-overview .dot.today { outline: 2px solid var(--accent); color: var(--text); }
-.week-overview .dot.partial { background: var(--accent-dim); color: var(--accent); }
-.week-overview .dot.full { background: var(--accent); color: var(--bg); font-weight: 700; }
 
 /* ===== 进度条 ===== */
 .progress { margin-bottom: 16px; }
@@ -155,3 +139,62 @@ main {
   color: var(--muted);
   font-size: 18px;
 }
+
+/* ===== 组间休息计时器 ===== */
+.timer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--card);
+}
+
+.timer-ring-wrap {
+  position: relative;
+  width: 140px;
+  height: 140px;
+}
+
+.timer-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ring-bg, .ring-fg {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.ring-bg { stroke: var(--card); }
+
+.ring-fg {
+  stroke: var(--accent);
+  /* 周长(dasharray)和偏移(dashoffset)由 app.js 里的 RING_CIRCUMFERENCE 统一设置 */
+  transition: stroke-dashoffset .3s linear;
+}
+
+.timer-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.timer-btn {
+  padding: 10px 42px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.timer-btn:active { transform: scale(.97); }

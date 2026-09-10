@@ -2,14 +2,14 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>健身计划</title>
 
   <!-- PWA / 添加到主屏幕 -->
   <meta name="theme-color" content="#0f172a">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon-180.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -33,8 +33,6 @@
 
     <!-- 今日打卡（点「开始」后显示） -->
     <section id="view-today" class="hidden">
-      <div id="week-overview" class="week-overview"></div>
-
       <div id="progress" class="progress">
         <div class="progress-row">
           <span>今日进度</span>
@@ -45,6 +43,18 @@
 
       <ul id="today-list" class="list"></ul>
       <div id="rest-day" class="rest hidden">今天是休息日</div>
+
+      <!-- 组间休息计时器 -->
+      <div class="timer">
+        <div class="timer-ring-wrap">
+          <svg class="timer-svg" viewBox="0 0 120 120">
+            <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+            <circle class="ring-fg" cx="60" cy="60" r="52"></circle>
+          </svg>
+          <span id="timer-text" class="timer-text"></span>
+        </div>
+        <button id="timer-btn" class="timer-btn">开始</button>
+      </div>
     </section>
   </main>
 

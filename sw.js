@@ -1,6 +1,6 @@
 // Service Worker：缓存静态资源，让 PWA 能离线打开
 // 改代码后记得把 CACHE 版本号 +1，浏览器才会拉新文件
-const CACHE = 'fitness-v2';
+const CACHE = 'fitness-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -8,6 +8,7 @@ const ASSETS = [
   './app.js',
   './manifest.json',
   './icon.svg',
+  './icon-180.png',
 ];
 
 self.addEventListener('install', (e) => {
@@ -27,7 +28,11 @@ self.addEventListener('activate', (e) => {
 // 网络优先：先联网拿最新文件，拿不到（离线）才用缓存。
 // 这样改完代码刷新就能看到新效果，不用每次改版本号。
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
+  const url = new URL(e.request.url);
+
+  // 只管本站的 GET 请求，其他（跨域等）交给浏览器默认处理
+  if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
+
   e.respondWith(
     fetch(e.request)
       .then((res) => {
@@ -35,6 +40,9 @@ self.addEventListener('fetch', (e) => {
         caches.open(CACHE).then((c) => c.put(e.request, copy));
         return res;
       })
-      .catch(() => caches.match(e.request))
+      .catch(() =>
+        // 离线且缓存里也没有时，返回一个错误响应，而不是报错崩溃
+        caches.match(e.request).then((cached) => cached || Response.error())
+      )
   );
 });

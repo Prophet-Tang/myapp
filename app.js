@@ -60,13 +60,6 @@ function todayDayIndex() {
   return ((new Date().getDay() + 6) % 7) + 1;
 }
 
-// 本周第 dayIndex 天（1..7）对应的 Date
-function dateOfThisWeek(dayIndex) {
-  const now = new Date();
-  const offset = dayIndex - todayDayIndex();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
-}
-
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
@@ -96,57 +89,70 @@ function saveLogs(logs) {
   localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
 }
 
+// 计划和日志在内存里留一份，避免每次点勾都重新读 localStorage + JSON.parse
+// （本应用是唯一的写入方，内存里的就是最新的）
+const plan = loadPlan();
+let logs = loadLogs();
+
+// ============ DOM 元素 ============
+
+const el = {
+  dateLabel: document.getElementById('date-label'),
+  todayList: document.getElementById('today-list'),
+  restDay: document.getElementById('rest-day'),
+  progress: document.getElementById('progress'),
+  progressText: document.getElementById('progress-text'),
+  progressBar: document.getElementById('progress-bar'),
+  timerText: document.getElementById('timer-text'),
+  timerBtn: document.getElementById('timer-btn'),
+  ringFg: document.querySelector('.ring-fg'),
+  startBtn: document.getElementById('start-btn'),
+  startScreen: document.getElementById('start-screen'),
+  viewToday: document.getElementById('view-today'),
+};
+
 // ============ 今日打卡 ============
 
 function renderToday() {
-  const plan = loadPlan();
-  const logs = loadLogs();
   const key = dateKeyOf(new Date());
   const dayIndex = todayDayIndex();
   const exercises = plan[dayIndex] || [];
   const done = logs[key] || {};
 
-  document.getElementById('date-label').textContent = `${DAY_NAMES[dayIndex]} · ${key}`;
-
-  const listEl = document.getElementById('today-list');
-  const restEl = document.getElementById('rest-day');
-  const progressEl = document.getElementById('progress');
+  el.dateLabel.textContent = `${DAY_NAMES[dayIndex]} · ${key}`;
 
   if (exercises.length === 0) {
-    listEl.innerHTML = '';
-    restEl.classList.remove('hidden');
-    progressEl.classList.add('hidden');
+    el.todayList.innerHTML = '';
+    el.restDay.classList.remove('hidden');
+    el.progress.classList.add('hidden');
   } else {
-    restEl.classList.add('hidden');
-    progressEl.classList.remove('hidden');
+    el.restDay.classList.add('hidden');
+    el.progress.classList.remove('hidden');
 
-    listEl.innerHTML = '';
+    el.todayList.innerHTML = '';
     exercises.forEach((ex) => {
       const checked = !!done[ex.id];
       const li = document.createElement('li');
       li.className = 'exercise' + (checked ? ' done' : '');
       li.innerHTML = `
-        <button class="check" data-id="${ex.id}">${checked ? '✓' : ''}</button>
+        <button class="check" data-id="${escapeHtml(ex.id)}">${checked ? '✓' : ''}</button>
         <div class="info">
           <span class="name">${escapeHtml(ex.name)}</span>
           ${ex.detail ? `<span class="detail">${escapeHtml(ex.detail)}</span>` : ''}
         </div>
       `;
       li.querySelector('.check').addEventListener('click', () => toggleExercise(ex.id));
-      listEl.appendChild(li);
+      el.todayList.appendChild(li);
     });
 
     const total = exercises.length;
     const completed = exercises.filter((ex) => done[ex.id]).length;
-    document.getElementById('progress-text').textContent = `${completed}/${total}`;
-    document.getElementById('progress-bar').style.width = `${(completed / total) * 100}%`;
+    el.progressText.textContent = `${completed}/${total}`;
+    el.progressBar.style.width = `${(completed / total) * 100}%`;
   }
-
-  renderWeekOverview();
 }
 
 function toggleExercise(id) {
-  const logs = loadLogs();
   const key = dateKeyOf(new Date());
   if (!logs[key]) logs[key] = {};
   logs[key][id] = !logs[key][id];
@@ -154,40 +160,78 @@ function toggleExercise(id) {
   renderToday();
 }
 
-// 本周 7 天概览：小方块显示每天是否练完
-function renderWeekOverview() {
-  const plan = loadPlan();
-  const logs = loadLogs();
-  const todayIdx = todayDayIndex();
-  const el = document.getElementById('week-overview');
-  el.innerHTML = '';
+// ============ 组间休息计时器 ============
 
-  for (let i = 1; i <= 7; i++) {
-    const dayLogs = logs[dateKeyOf(dateOfThisWeek(i))] || {};
-    const exercises = plan[i] || [];
-    const completed = exercises.filter((ex) => dayLogs[ex.id]).length;
+const TIMER_DURATION = 90; // 90 秒一圈
+const RING_RADIUS = 52; // 和 index.html 里 circle 的 r 保持一致
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
-    const dot = document.createElement('div');
-    dot.className = 'dot';
-    if (i === todayIdx) dot.classList.add('today');
-    if (exercises.length > 0 && completed === exercises.length) dot.classList.add('full');
-    else if (completed > 0) dot.classList.add('partial');
-    dot.textContent = DAY_NAMES[i].charAt(1); // '一' '二' ...
-    el.appendChild(dot);
-  }
+let timerEndAt = null;    // 倒计时结束的时间点（Date.now() 毫秒），没在跑时为 null
+let timerInterval = null;
+let timerRunning = false;
+
+// 还剩几秒；用时间戳计算，锁屏/切后台回来也依然准确
+function timerSecondsLeft() {
+  return timerRunning
+    ? Math.max(0, Math.ceil((timerEndAt - Date.now()) / 1000))
+    : TIMER_DURATION;
+}
+
+function updateTimer() {
+  const remaining = timerSecondsLeft();
+  el.timerText.textContent = remaining;
+  const offset = RING_CIRCUMFERENCE * (remaining / TIMER_DURATION);
+  el.ringFg.style.strokeDashoffset = offset;
+}
+
+function startTimer() {
+  if (timerRunning) return; // 已经在跑，忽略重复点击
+  timerRunning = true;
+  timerEndAt = Date.now() + TIMER_DURATION * 1000;
+  updateTimer();
+  el.timerBtn.textContent = '休息中…';
+  timerInterval = setInterval(() => {
+    updateTimer();
+    if (timerSecondsLeft() <= 0) {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      el.timerBtn.textContent = '开始';
+      if (navigator.vibrate) navigator.vibrate(200); // 安卓真震动
+      flashRing(); // iPhone 用闪烁提醒
+    }
+  }, 1000);
+}
+
+function flashRing() {
+  let flashes = 0;
+  const t = setInterval(() => {
+    el.ringFg.style.stroke = flashes % 2 === 0 ? '#ffffff' : '#34d399';
+    flashes++;
+    if (flashes >= 6) {
+      clearInterval(t);
+      el.ringFg.style.stroke = '#34d399';
+    }
+  }, 200);
 }
 
 // ============ 初始化 ============
 
+// 让 JS 成为圆环周长的唯一来源，CSS 里不再写死 326.73
+el.ringFg.style.strokeDasharray = RING_CIRCUMFERENCE;
+
 // 一开始就显示日期（开始页也能看到今天周几）
-document.getElementById('date-label').textContent = `${DAY_NAMES[todayDayIndex()]} · ${dateKeyOf(new Date())}`;
+el.dateLabel.textContent = `${DAY_NAMES[todayDayIndex()]} · ${dateKeyOf(new Date())}`;
 
 // 点「开始」→ 进入今日训练计划
-document.getElementById('start-btn').addEventListener('click', () => {
-  document.getElementById('start-screen').classList.add('hidden');
-  document.getElementById('view-today').classList.remove('hidden');
+el.startBtn.addEventListener('click', () => {
+  el.startScreen.classList.add('hidden');
+  el.viewToday.classList.remove('hidden');
   renderToday();
 });
+
+// 组间休息计时器
+updateTimer();
+el.timerBtn.addEventListener('click', startTimer);
 
 // 注册 Service Worker（仅 http/https 下生效，file:// 会被忽略）
 if ('serviceWorker' in navigator) {
